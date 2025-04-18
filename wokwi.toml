@@ -1,0 +1,6 @@
+[wokwi]
+version = 1
+elf = "examples/esp32_ex/build/esp32_ex.elf"
+firmware = "examples/esp32_ex/build/esp32_ex.bin"
+gdbServerPort=3333
+
