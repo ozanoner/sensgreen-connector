@@ -1,3 +1,6 @@
+![Build and Test](https://github.com/ozanoner/sensgreen-connector/actions/workflows/ci.yml/badge.svg)
+
+
 # Sensgreen connector for ESP32
 
 
