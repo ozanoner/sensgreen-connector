@@ -1,0 +1,4 @@
+## IDF Component Manager Manifest File
+dependencies:
+  johboh/nlohmann-json:
+    version: ">=3.12.0"

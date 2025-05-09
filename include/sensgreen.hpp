@@ -10,6 +10,7 @@
 
 #include "nlohmann/json.hpp"
 #include "sensgreen/device.hpp"
+#include "sensgreen/metric_types.hpp"
 #include "sensgreen/mqtt_connector.hpp"
 
 #ifdef SENSGREEN_ESP32

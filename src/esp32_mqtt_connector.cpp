@@ -8,6 +8,7 @@
 
 #include "esp32_mqtt_connector.hpp"
 
+#include "esp_event.h"
 #include "esp_log.h"
 
 #define RETURN_IF_NOT_READY()             \
@@ -44,7 +45,6 @@ int Esp32MqttConnector::init(const sensgreen::common::mqtt::ConnConfig& config)
 {
     if (m_client)
     {
-        ESP_LOGE("MQTT", "Already initialized");
         return ESP_ERR_NOT_ALLOWED;
     }
 
@@ -53,24 +53,23 @@ int Esp32MqttConnector::init(const sensgreen::common::mqtt::ConnConfig& config)
     // TODO: secure MQTT
     esp_mqtt_client_config_t mqtt_cfg {};
 
-    mqtt_cfg.broker.address.uri                  = nullptr;
-    mqtt_cfg.broker.address.hostname             = m_config.host.data();
-    mqtt_cfg.broker.address.port                 = static_cast<uint32_t>(m_config.port);
+    mqtt_cfg.broker.address.uri                  = m_config.host.data();
+    mqtt_cfg.broker.address.port                 = static_cast<uint16_t>(m_config.port);
     mqtt_cfg.credentials.username                = m_config.username.data();
     mqtt_cfg.credentials.authentication.password = m_config.password.data();
 
     m_client = esp_mqtt_client_init(&mqtt_cfg);
     if (!m_client)
     {
-        ESP_LOGE("MQTT", "Failed to initialize MQTT client");
         return ESP_ERR_NO_MEM;
     }
 
-    esp_mqtt_client_register_event(m_client, static_cast<esp_mqtt_event_id_t>(ESP_EVENT_ANY_ID), handleMqttEvent,
-                                   m_client);
-    m_ready = true;
+    esp_err_t err = esp_mqtt_client_register_event(m_client, static_cast<esp_mqtt_event_id_t>(ESP_EVENT_ANY_ID),
+                                                   handleMqttEvent, m_client);
 
-    return ESP_OK;
+    m_ready = (err == ESP_OK);
+
+    return err;
 }
 
 int Esp32MqttConnector::connect()
@@ -78,11 +77,7 @@ int Esp32MqttConnector::connect()
     RETURN_IF_NOT_READY();
 
     esp_err_t err = esp_mqtt_client_start(m_client);
-    if (err != ESP_OK)
-    {
-        ESP_LOGE("MQTT", "Failed to start MQTT client: %s", esp_err_to_name(err));
-        m_ready = false;
-    }
+    m_ready       = (err == ESP_OK);
 
     return err;
 }
@@ -94,7 +89,7 @@ int Esp32MqttConnector::publish(std::string_view topic, std::string_view payload
     int msg_id = esp_mqtt_client_publish(m_client, topic.data(), payload.data(), static_cast<int>(payload.size()), qos,
                                          retain ? 1 : 0);
 
-    return (msg_id >= 0) ? 0 : -1;
+    return (msg_id >= 0) ? 0 : ESP_FAIL;
 }
 
 int Esp32MqttConnector::subscribe(std::string_view topic, sensgreen::common::mqtt::MessageHandler handler)
@@ -104,27 +99,30 @@ int Esp32MqttConnector::subscribe(std::string_view topic, sensgreen::common::mqt
     int msg_id = esp_mqtt_client_subscribe(m_client, topic.data(), 1);
     if (msg_id < 0)
     {
-        ESP_LOGE("MQTT", "Failed to subscribe to topic %.*s", static_cast<int>(topic.size()), topic.data());
-        return -1;
+        return ESP_FAIL;
     }
 
     registerHandler(topic, std::move(handler));  // store handler for dispatch
-    return 0;
+    return ESP_OK;
 }
 
 void Esp32MqttConnector::handleMqttEvent(void* handler_args, esp_event_base_t base, int32_t event_id, void* event_data)
 {
-    auto* event = static_cast<esp_mqtt_event_handle_t>(event_data);
+    auto* event     = static_cast<esp_mqtt_event_handle_t>(event_data);
+    auto& connector = Esp32MqttConnector::instance();
 
     switch (event_id)
     {
         case MQTT_EVENT_CONNECTED:
+            // TODO: add external event handling callback
             ESP_LOGI("MQTT", "Connected to broker");
+            connector.m_ready = true;
             break;
 
         case MQTT_EVENT_DISCONNECTED:
-            ESP_LOGW("MQTT", "Disconnected from broker");
+            ESP_LOGD("MQTT", "Disconnected from broker");
             // TODO: auto-reconnect
+            connector.m_ready = false;
             break;
 
         case MQTT_EVENT_DATA:
@@ -132,14 +130,16 @@ void Esp32MqttConnector::handleMqttEvent(void* handler_args, esp_event_base_t ba
             std::string_view topic(event->topic, event->topic_len);
             std::string_view payload(event->data, event->data_len);
 
-            ESP_LOGI("MQTT", "Incoming message on topic %.*s", static_cast<int>(topic.size()), topic.data());
+            ESP_LOGD("MQTT", "Incoming message on topic %.*s", static_cast<int>(topic.size()), topic.data());
 
             instance().dispatchMessage(topic, payload);
             break;
         }
 
         case MQTT_EVENT_ERROR:
+            // TODO: add external error handling callback
             ESP_LOGE("MQTT", "MQTT error occurred");
+            connector.m_ready = false;
             break;
 
         default:

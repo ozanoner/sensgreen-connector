@@ -13,29 +13,19 @@
 namespace sensgreen::device
 {
 
-template <typename T>
+template <typename T, typename Tag>
 class MetricBase
 {
    public:
-    static constexpr std::string_view name           = "unknown";
-    static constexpr std::string_view unit           = "unknown";
-    static constexpr bool             isControllable = false;
+    static constexpr std::string_view name           = Tag::name;
+    static constexpr std::string_view unit           = Tag::unit;
+    static constexpr bool             isControllable = Tag::isControllable;
 
     explicit MetricBase(const T value = {}) : m_value(value) { }
 
     T getValue(void) const { return m_value; }
 
-    void setValue(const T value)
-    {
-        if constexpr (isControllable)
-        {
-            m_value = value;
-        }
-        else
-        {
-            static_assert(isControllable, "Metric is not controllable");
-        }
-    }
+    void setValue(const T value) { m_value = value; }
 
    protected:
     T m_value;

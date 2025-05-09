@@ -30,7 +30,8 @@ class SensorBase
     SensorBase(const SensorBase&)            = delete;
     SensorBase& operator=(const SensorBase&) = delete;
 
-    virtual void read() = 0;
+    // read the physical sensor and update the metrics
+    virtual int read() = 0;
 
     template <typename MetricType>
     auto& get()

@@ -13,30 +13,33 @@
 namespace sensgreen::device
 {
 
-class Temperature : public MetricBase<float>
+struct TemperatureReadOnlyTag
 {
-   public:
     static constexpr std::string_view name           = "temperature";
     static constexpr std::string_view unit           = "°C";
     static constexpr bool             isControllable = false;
 };
 
-class Humidity : public MetricBase<float>
+using TemperatureMetric = MetricBase<float, TemperatureReadOnlyTag>;
+
+struct HumidityReadOnlyTag
 {
-   public:
     static constexpr std::string_view name           = "humidity";
     static constexpr std::string_view unit           = "%";
     static constexpr bool             isControllable = false;
 };
 
-class Pressure : public MetricBase<float>
+using HumidityMetric = MetricBase<float, HumidityReadOnlyTag>;
+
+struct PressureReadOnlyTag
 {
-   public:
     static constexpr std::string_view name           = "pressure";
     static constexpr std::string_view unit           = "hPa";
     static constexpr bool             isControllable = false;
 };
 
+using PressureMetric = MetricBase<float, PressureReadOnlyTag>;
+
 // TODO: add other types
 
-}  // namespace sensgreen
+}  // namespace sensgreen::device

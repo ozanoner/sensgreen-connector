@@ -35,10 +35,14 @@
 	"workspaceFolder": "/workspaces",
 	"mounts": [
 		"source=extensionCache,target=/root/.vscode-server/extensions,type=volume",
-		"source=/dev/bus/usb,target=/dev/bus/usb,type=bind",
+		"source=/dev,target=/dev,type=bind",
 		"source=${env:HOME}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached"
 	],
 	"runArgs": [
 		"--privileged"
-	]
+	],
+	"containerEnv": {
+		"LC_ALL": "C.UTF-8",
+		"LANG": "C.UTF-8"
+	}
 }
