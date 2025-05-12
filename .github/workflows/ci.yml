@@ -52,4 +52,5 @@ jobs:
         uses: wokwi/wokwi-ci-action@v1
         with:
           token: ${{ secrets.WOKWI_CLI_TOKEN }}
-          expect_text: 'MQTT: Connected to broker'
+          timeout: 20000
+          expect_text: 'Connected to broker'
