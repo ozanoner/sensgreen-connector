@@ -15,25 +15,25 @@
 #include "mqtt_client.h"
 #include "sensgreen/mqtt_connector.hpp"
 
-namespace sensgreen::port::mqtt
+namespace sensgreen::mqtt::esp32
 {
 
-class Esp32MqttConnector : public sensgreen::common::mqtt::Connector
+class Esp32MqttConnector : public sensgreen::mqtt::Connector
 {
    public:
     static Esp32MqttConnector& instance();
     ~Esp32MqttConnector() override;
 
-    int init(const sensgreen::common::mqtt::ConnConfig& config) override;
+    int init(const sensgreen::mqtt::ConnConfig& config) override;
     int connect(void) override;
     int publish(std::string_view topic, std::string_view payload, int qos = 1, bool retain = false) override;
-    int subscribe(std::string_view topic, sensgreen::common::mqtt::MessageHandler handler) override;
+    int subscribe(std::string_view topic, sensgreen::mqtt::DataHandler handler) override;
 
    private:
     Esp32MqttConnector() = default;
 
     esp_mqtt_client_handle_t m_client = nullptr;
-    static void handleMqttEvent(void* handler_args, esp_event_base_t base, int32_t event_id, void* event_data);
+    static void handleMqttEvent(void* handlerArgs, esp_event_base_t base, int32_t eventId, void* eventData);
 };
 
-}  // namespace sensgreen::port::mqtt
+}  // namespace sensgreen::mqtt::esp32

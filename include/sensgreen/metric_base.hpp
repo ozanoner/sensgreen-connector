@@ -23,9 +23,14 @@ class MetricBase
 
     explicit MetricBase(const T value = {}) : m_value(value) { }
 
-    T getValue(void) const { return m_value; }
+    T getValue() const { return m_value; }
 
     void setValue(const T value) { m_value = value; }
+
+    // helpers to return metric tag information
+    auto getName() const { return name; }
+    auto getUnit() const { return unit; }
+    auto isControllableMetric() const { return MetricBase<T, Tag>::isControllable; }
 
    protected:
     T m_value;

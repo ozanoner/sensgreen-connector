@@ -25,14 +25,17 @@
 
 #define TAG (TAG_STR.data())
 
-using sensgreen::common::mqtt::ConnConfig;
 using sensgreen::device::DeviceConfig;
-using sensgreen::port::mqtt::Esp32MqttConnector;
+using sensgreen::mqtt::ConnConfig;
+using sensgreen::mqtt::MqttEvent;
+using sensgreen::mqtt::esp32::Esp32MqttConnector;
 
 namespace
 {
-DeviceConfig               deviceConfig {DEVICE_UID, MQTT_TOPIC, MQTT_TOPIC, MQTT_TOPIC, MQTT_TOPIC};
-app::MyTemperatureDevice   device {deviceConfig};
+DeviceConfig             deviceConfig {DEVICE_UID, MQTT_TOPIC, MQTT_TOPIC, MQTT_TOPIC, MQTT_TOPIC};
+app::MyTemperatureDevice device {deviceConfig};
+auto&                    connector = Esp32MqttConnector::instance();
+
 constexpr std::string_view NTP_SERVER {"pool.ntp.org"};
 constexpr std::string_view TAG_STR {"app"};
 
@@ -45,7 +48,7 @@ void timeSynced(struct timeval* tv)
 {
     ESP_LOGI(TAG, "Time synced");
 
-    esp_err_t err = Esp32MqttConnector::instance().connect();
+    esp_err_t err = connector.connect();
 
     if (err == ESP_OK)
     {
@@ -65,7 +68,20 @@ extern "C" void app_main(void)
              MQTT_USER, MQTT_PASS);
 
     ConnConfig config {MQTT_HOST, static_cast<int16_t>(std::stoi(MQTT_PORT)), MQTT_USER, MQTT_PASS};
-    ESP_ERROR_CHECK(Esp32MqttConnector::instance().init(config));
+    ESP_ERROR_CHECK(connector.init(config));
+
+    // register a connected handler. the wokwi test is here.
+    connector.registerEventHandler(
+        MqttEvent::CONNECTED,
+        [](const void*)
+        {
+            ESP_LOGI(TAG, "connected to broker");
+            const auto& report = device.report();
+            ESP_LOGI(TAG, "%s", report.dump().c_str());
+
+            esp_err_t err = static_cast<esp_err_t>(connector.publish(deviceConfig.topicData, report.dump()));
+            ESP_LOGI(TAG, "publish result='%s'", esp_err_to_name(err));
+        });
 
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
@@ -81,6 +97,12 @@ extern "C" void app_main(void)
     sntpConfig.sync_cb                    = timeSynced;
     ESP_ERROR_CHECK(esp_netif_sntp_init(&sntpConfig));
 
+    // make sensor reading ready before connecting to the broker
+    device.readAllSensors();
+
+    // connect wifi
     ESP_ERROR_CHECK(example_connect());
+
+    // start SNTP
     ESP_ERROR_CHECK(esp_netif_sntp_start());
 }

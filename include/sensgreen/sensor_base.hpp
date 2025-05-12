@@ -61,12 +61,11 @@ class SensorBase
 
     void append(nlohmann::json& j) const
     {
-        std::apply([&j](const auto&... metric) { ((j[decltype(metric)::name.data()] = metric.getValue()), ...); },
-                   m_metrics);
+        std::apply([&j](const auto&... metric) { ((j[metric.getName().data()] = metric.getValue()), ...); }, m_metrics);
     }
 
    protected:
     MetricsTuple m_metrics;
 };
 
-}  // namespace sensgreen
+}  // namespace sensgreen::device

@@ -20,7 +20,7 @@
         }                                 \
     } while (0)
 
-namespace sensgreen::port::mqtt
+namespace sensgreen::mqtt::esp32
 {
 
 Esp32MqttConnector& Esp32MqttConnector::instance()
@@ -41,7 +41,7 @@ Esp32MqttConnector::~Esp32MqttConnector()
     }
 }
 
-int Esp32MqttConnector::init(const sensgreen::common::mqtt::ConnConfig& config)
+int Esp32MqttConnector::init(const sensgreen::mqtt::ConnConfig& config)
 {
     if (m_client)
     {
@@ -65,7 +65,7 @@ int Esp32MqttConnector::init(const sensgreen::common::mqtt::ConnConfig& config)
     }
 
     esp_err_t err = esp_mqtt_client_register_event(m_client, static_cast<esp_mqtt_event_id_t>(ESP_EVENT_ANY_ID),
-                                                   handleMqttEvent, m_client);
+                                                   handleMqttEvent, this);
 
     m_ready = (err == ESP_OK);
 
@@ -86,13 +86,16 @@ int Esp32MqttConnector::publish(std::string_view topic, std::string_view payload
 {
     RETURN_IF_NOT_READY();
 
+    ESP_LOGI("MQTT", "publishing to topic '%.*s', data '%.*s'", topic.size(), topic.data(), payload.size(),
+             payload.data());
     int msg_id = esp_mqtt_client_publish(m_client, topic.data(), payload.data(), static_cast<int>(payload.size()), qos,
                                          retain ? 1 : 0);
 
+    ESP_LOGI("MQTT", "msg_id=%d", msg_id);
     return (msg_id >= 0) ? 0 : ESP_FAIL;
 }
 
-int Esp32MqttConnector::subscribe(std::string_view topic, sensgreen::common::mqtt::MessageHandler handler)
+int Esp32MqttConnector::subscribe(std::string_view topic, sensgreen::mqtt::DataHandler handler)
 {
     RETURN_IF_NOT_READY();
 
@@ -102,44 +105,37 @@ int Esp32MqttConnector::subscribe(std::string_view topic, sensgreen::common::mqt
         return ESP_FAIL;
     }
 
-    registerHandler(topic, std::move(handler));  // store handler for dispatch
+    registerDataHandler(topic, std::move(handler));  // store handler for dispatch
     return ESP_OK;
 }
 
-void Esp32MqttConnector::handleMqttEvent(void* handler_args, esp_event_base_t base, int32_t event_id, void* event_data)
+void Esp32MqttConnector::handleMqttEvent(void* handlerArgs, esp_event_base_t base, int32_t eventId, void* eventData)
 {
-    auto* event     = static_cast<esp_mqtt_event_handle_t>(event_data);
-    auto& connector = Esp32MqttConnector::instance();
+    auto*               event     = static_cast<esp_mqtt_event_handle_t>(eventData);
+    Esp32MqttConnector& connector = *static_cast<Esp32MqttConnector*>(handlerArgs);
 
-    switch (event_id)
+    switch (eventId)
     {
         case MQTT_EVENT_CONNECTED:
-            // TODO: add external event handling callback
-            ESP_LOGI("MQTT", "Connected to broker");
-            connector.m_ready = true;
+            connector.handleEvent(MqttEvent::CONNECTED, nullptr);
             break;
 
         case MQTT_EVENT_DISCONNECTED:
-            ESP_LOGD("MQTT", "Disconnected from broker");
             // TODO: auto-reconnect
-            connector.m_ready = false;
+            connector.handleEvent(MqttEvent::DISCONNECTED, nullptr);
             break;
 
         case MQTT_EVENT_DATA:
         {
-            std::string_view topic(event->topic, event->topic_len);
-            std::string_view payload(event->data, event->data_len);
+            std::string_view topic {event->topic, (size_t)event->topic_len};
+            std::string_view payload {event->data, (size_t)event->data_len};
 
-            ESP_LOGD("MQTT", "Incoming message on topic %.*s", static_cast<int>(topic.size()), topic.data());
-
-            instance().dispatchMessage(topic, payload);
+            connector.dispatchData(topic, payload);
             break;
         }
 
         case MQTT_EVENT_ERROR:
-            // TODO: add external error handling callback
-            ESP_LOGE("MQTT", "MQTT error occurred");
-            connector.m_ready = false;
+            connector.handleEvent(MqttEvent::ERROR, eventData);
             break;
 
         default:
@@ -147,4 +143,4 @@ void Esp32MqttConnector::handleMqttEvent(void* handler_args, esp_event_base_t ba
     }
 }
 
-}  // namespace sensgreen::port::mqtt
+}  // namespace sensgreen::mqtt::esp32
