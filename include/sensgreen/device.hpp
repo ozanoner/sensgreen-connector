@@ -19,10 +19,10 @@ namespace sensgreen::device
 struct DeviceConfig
 {
     std::string_view uid;
-    std::string_view data_topic;
-    std::string_view cmd_topic;
-    std::string_view err_topic;
-    std::string_view ota_topic;
+    std::string_view topicData;
+    std::string_view topicCmd;
+    std::string_view topicErr;
+    std::string_view topicOta;
 };
 
 template <typename... Sensors>

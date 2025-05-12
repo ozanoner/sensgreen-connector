@@ -53,4 +53,4 @@ jobs:
         with:
           token: ${{ secrets.WOKWI_CLI_TOKEN }}
           timeout: 20000
-          expect_text: 'Connected to broker'
+          expect_text: 'publish result=''ESP_OK'''

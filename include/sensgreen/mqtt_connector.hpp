@@ -15,10 +15,18 @@
 #include <unordered_map>
 #include <vector>
 
-// the namespace common is shared across ports
-namespace sensgreen::common::mqtt
+namespace sensgreen::mqtt
 {
-using MessageHandler = std::function<void(const std::string_view topic, const std::string_view payload)>;
+
+enum class MqttEvent
+{
+    CONNECTED,
+    DISCONNECTED,
+    ERROR
+};
+
+using DataHandler  = std::function<void(const std::string_view topic, const std::string_view payload)>;
+using EventHandler = std::function<void(const void* eventData)>;
 
 struct ConnConfig
 {
@@ -36,23 +44,49 @@ class Connector
 
     // exact match
     // TODO: wildcard
-    std::unordered_map<std::string, std::vector<MessageHandler>> m_topicHandlers;
+    std::unordered_map<std::string, std::vector<DataHandler>> m_dataHandlers;
+
+    std::unordered_map<MqttEvent, std::vector<EventHandler>> m_eventHandlers;
 
     /**
      * @brief registers a handler for a topic. call it after a successful subscription
      * @param topic MQTT topic
      * @param handler message handler
      */
-    void registerHandler(std::string_view topic, MessageHandler handler)
+    void registerDataHandler(std::string_view topic, DataHandler handler)
     {
-        m_topicHandlers[std::string(topic)].emplace_back(std::move(handler));
+        m_dataHandlers[std::string(topic)].emplace_back(std::move(handler));
     }
 
-    void dispatchMessage(std::string_view topic, std::string_view payload)
+    void dispatchData(std::string_view topic, std::string_view payload)
     {
-        for (auto& handler : m_topicHandlers[std::string(topic)])
+        for (auto& handler : m_dataHandlers[std::string(topic)])
         {
             handler(topic, payload);
+        }
+    }
+
+    void handleEvent(MqttEvent event, const void* eventData)
+    {
+        switch (event)
+        {
+            case MqttEvent::CONNECTED:
+                m_ready = true;
+                break;
+            case MqttEvent::DISCONNECTED:
+                m_ready = false;
+                break;
+            case MqttEvent::ERROR:
+                m_ready = false;
+                break;
+
+            default:
+                break;
+        }
+
+        for (auto& handler : m_eventHandlers[event])
+        {
+            handler(eventData);
         }
     }
 
@@ -73,8 +107,13 @@ class Connector
     bool ready() const { return m_ready; }
 
     virtual int connect(void)                                                                               = 0;
-    virtual int publish(std::string_view topic, std::string_view payload, int qos = 1, bool retain = false) = 0;
-    virtual int subscribe(std::string_view topic, MessageHandler handler)                                   = 0;
+    virtual int publish(std::string_view topic, std::string_view payload, int qos = 0, bool retain = false) = 0;
+    virtual int subscribe(std::string_view topic, DataHandler handler)                                      = 0;
+
+    void registerEventHandler(MqttEvent event, EventHandler handler)
+    {
+        m_eventHandlers[event].emplace_back(std::move(handler));
+    }
 };
 
-}  // namespace sensgreen::common::mqtt
+}  // namespace sensgreen::mqtt

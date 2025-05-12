@@ -6,6 +6,7 @@ namespace app
 
 class TemperatureSensorBrandA : public sensgreen::device::SensorBase<sensgreen::device::TemperatureMetric>
 {
+   public:
     virtual int read() override
     {
         // first read temperature from the physical sensor
@@ -16,8 +17,8 @@ class TemperatureSensorBrandA : public sensgreen::device::SensorBase<sensgreen::
     }
 };
 
-class MyTemperatureDevice : public sensgreen::device::DeviceBase<TemperatureSensorBrandA>
+class MyTemperatureDevice : public sensgreen::device::esp32::Esp32Device<TemperatureSensorBrandA>
 {
-    using DeviceBase<TemperatureSensorBrandA>::DeviceBase;  // inherit constructors
+    using sensgreen::device::esp32::Esp32Device<TemperatureSensorBrandA>::Esp32Device;  // inherit constructors
 };
 }  // namespace app
