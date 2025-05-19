@@ -1,5 +1,11 @@
+
+# Collect all .cpp files under src/esp32 (non-recursive)
+file(GLOB_RECURSE SENSGREEN_SRCS
+     "${CMAKE_CURRENT_LIST_DIR}/src/esp32/*.cpp"
+)
+
 idf_component_register(COMPONENT_NAME "sensgreen-connector"
-                    SRCS "src/esp32_mqtt_connector.cpp"
+                    SRCS "${SENSGREEN_SRCS}"
                     INCLUDE_DIRS "include" "include/port/esp32"
                     REQUIRES "esp_event" "mqtt" "nlohmann-json")
 
