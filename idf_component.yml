@@ -1,4 +1,19 @@
 ## IDF Component Manager Manifest File
+
+version: "0.1.0"
+description: "Sensgreen connector for ESP32 over MQTT"
+url: "https://github.com/ozanoner/sensgreen-connector"
+issues: "https://github.com/ozanoner/sensgreen-connector/issues"
+documentation: "https://github.com/ozanoner/sensgreen-connector/blob/master/README.md"
+repository: "https://github.com/ozanoner/sensgreen-connector.git"
 dependencies:
-  johboh/nlohmann-json:
-    version: ">=3.12.0"
+  idf: ">=5.2"
+  johboh/nlohmann-json: "^3.12.0"
+targets:
+  - esp32
+  - esp32c2
+  - esp32c3
+  - esp32c5
+  - esp32c6
+  - esp32s2
+  - esp32s3

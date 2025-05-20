@@ -16,6 +16,12 @@ jobs:
     if: github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        mcu: [esp32, esp32c3, esp32s3]
+        idf: [v5.2, v5.3, v5.4]
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -36,21 +42,27 @@ jobs:
       - name: esp-idf build
         uses: espressif/esp-idf-ci-action@v1
         with:
-          esp_idf_version: v5.4.1
-          target: esp32
+          esp_idf_version: ${{ matrix.idf }}
+          target: ${{ matrix.mcu }}
           path: 'examples/esp32_ex'
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: |
-            examples/esp32_ex/sdkconfig
-            examples/esp32_ex/build/flasher_args.json
         
-      - name: Test with Wokwi
+      - name: Select Wokwi diagram for ${{ matrix.mcu }}
+        run: cp .wokwi/diagram-${{ matrix.mcu }}.json diagram.json
+    
+      - name: Test on Wokwi (${{ matrix.mcu }}, IDF ${{ matrix.idf }})
         uses: wokwi/wokwi-ci-action@v1
         with:
           token: ${{ secrets.WOKWI_CLI_TOKEN }}
           timeout: 20000
-          expect_text: 'publish result=''ESP_OK'''
+          expect_text: "publish result='ESP_OK'"
+          serial_log_file: wokwi.out
+
+      - name: Upload artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ matrix.mcu }}-${{ matrix.idf }}
+          path: |
+            examples/esp32_ex/sdkconfig
+            examples/esp32_ex/build/flasher_args.json
+            wokwi.out
