@@ -1,6 +1,6 @@
 ## IDF Component Manager Manifest File
 
-version: "0.1.0"
+version: "0.1.1"
 description: "Sensgreen connector for ESP32 over MQTT"
 tags:
   - mqtt
