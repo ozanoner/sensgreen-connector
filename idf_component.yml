@@ -2,6 +2,9 @@
 
 version: "0.1.0"
 description: "Sensgreen connector for ESP32 over MQTT"
+tags:
+  - mqtt
+  - sensgreen
 url: "https://github.com/ozanoner/sensgreen-connector"
 issues: "https://github.com/ozanoner/sensgreen-connector/issues"
 documentation: "https://github.com/ozanoner/sensgreen-connector/blob/master/README.md"
