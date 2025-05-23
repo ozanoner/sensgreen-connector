@@ -20,3 +20,5 @@ targets:
   - esp32c6
   - esp32s2
   - esp32s3
+files:
+   use_gitignore: true
