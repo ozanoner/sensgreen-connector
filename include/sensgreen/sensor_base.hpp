@@ -33,6 +33,9 @@ class SensorBase
     // read the physical sensor and update the metrics
     virtual int read() = 0;
 
+    // initialize the sensor
+    virtual int init(void* param) { return 0; }
+
     template <typename MetricType>
     auto& get()
     {
