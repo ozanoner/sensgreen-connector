@@ -40,6 +40,15 @@ struct PressureReadOnlyTag
 
 using PressureMetric = MetricBase<float, PressureReadOnlyTag>;
 
+struct LightReadOnlyTag
+{
+    static constexpr std::string_view name           = "light";
+    static constexpr std::string_view unit           = "lux";
+    static constexpr bool             isControllable = false;
+};
+
+using LightMetric = MetricBase<float, LightReadOnlyTag>;
+
 // TODO: add other types
 
 }  // namespace sensgreen::device
