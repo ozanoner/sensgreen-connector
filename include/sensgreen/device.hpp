@@ -39,6 +39,9 @@ class DeviceBase
 
     const DeviceConfig& config() const { return m_config; }
 
+    // initialize the device
+    virtual int init(void* param) { return 0; }
+
     template <std::size_t Index>
     auto& getSensor()
     {
