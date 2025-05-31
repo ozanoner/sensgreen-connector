@@ -3,7 +3,12 @@
 cmake_minimum_required(VERSION 3.16)
 
 set(IDF_TARGET "esp32c6")
-set(EXTRA_COMPONENT_DIRS ../.. $ENV{IDF_PATH}/examples/common_components/protocol_examples_common)
+set(EXTRA_COMPONENT_DIRS 
+    ../.. 
+    $ENV{IDF_PATH}/examples/common_components/protocol_examples_common
+    ./extra_components/esp-iot-solution/components/sensors/light_sensor/bh1750
+    ./extra_components/esp-iot-solution/components/sensors/pressure/bme280
+    ./extra_components/esp-iot-solution/components/led/led_indicator)
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/build_secrets.cmake")
     include(${CMAKE_SOURCE_DIR}/build_secrets.cmake)

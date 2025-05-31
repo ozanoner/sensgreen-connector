@@ -87,7 +87,7 @@ extern "C" void app_main(void)
     ConnConfig config {MQTT_HOST, static_cast<int16_t>(std::stoi(MQTT_PORT)), MQTT_USER, MQTT_PASS};
     ESP_ERROR_CHECK(connector.init(config));
 
-    // register a connected handler. the wokwi test is here.
+    // Start the publish task when MQTT is connected
     connector.registerEventHandler(MqttEvent::CONNECTED,
                                    [](const void*)
                                    {
@@ -102,6 +102,7 @@ extern "C" void app_main(void)
                                        }
                                    });
 
+    // Stop the publish task when MQTT is disconnected
     connector.registerEventHandler(MqttEvent::DISCONNECTED,
                                    [](const void*)
                                    {
