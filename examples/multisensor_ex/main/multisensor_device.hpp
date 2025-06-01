@@ -28,8 +28,8 @@ class Bme280
                                            sensgreen::device::PressureMetric>
 {
    private:
-    bme280_handle_t              m_bme280;
-    inline static constexpr char TAG[] = "bme280";
+    bme280_handle_t       m_bme280;
+    static constexpr auto TAG = "bme280";
 
    public:
     int init(void *param) override
@@ -48,21 +48,19 @@ class Bme280
         float     data = 0.0;
         esp_err_t err  = ESP_OK;
 
-        vTaskDelay(300 / portTICK_RATE_MS);
+        vTaskDelay(pdMS_TO_TICKS(300));
         PRINT_LOC_D("before bme280_read_temperature");
         err = bme280_read_temperature(m_bme280, &data);
         PRINT_IF_ERR(err);
         RETURN_IF_ERR(err);
         get<sensgreen::device::TemperatureMetric>().setValue(data);
 
-        vTaskDelay(300 / portTICK_RATE_MS);
         PRINT_LOC_D("before bme280_read_humidity");
         err = bme280_read_humidity(m_bme280, &data);
         PRINT_IF_ERR(err);
         RETURN_IF_ERR(err);
         get<sensgreen::device::HumidityMetric>().setValue(data);
 
-        vTaskDelay(300 / portTICK_RATE_MS);
         PRINT_LOC_D("before bme280_read_pressure");
         err = bme280_read_pressure(m_bme280, &data);
         PRINT_IF_ERR(err);
@@ -76,8 +74,8 @@ class Bme280
 class Bh1750 : public sensgreen::device::SensorBase<sensgreen::device::LightMetric>
 {
    private:
-    bh1750_handle_t              m_bh1750;
-    inline static constexpr char TAG[] = "bh1750";
+    bh1750_handle_t       m_bh1750;
+    static constexpr auto TAG = "bh1750";
 
    public:
     int init(void *param) override
@@ -97,7 +95,7 @@ class Bh1750 : public sensgreen::device::SensorBase<sensgreen::device::LightMetr
         bh1750_power_on(m_bh1750);
         bh1750_set_measure_mode(m_bh1750, BH1750_ONETIME_4LX_RES);
 
-        vTaskDelay(30 / portTICK_RATE_MS);
+        vTaskDelay(pdMS_TO_TICKS(30));
         PRINT_LOC_D("before bh1750_get_data");
         err = bh1750_get_data(m_bh1750, &data);
         PRINT_IF_ERR(err);
@@ -114,7 +112,7 @@ class MyDevice : public sensgreen::device::esp32::Esp32Device<Bme280, Bh1750>
     using sensgreen::device::esp32::Esp32Device<Bme280, Bh1750>::Esp32Device;  // inherit constructors
 
    private:
-    inline static constexpr char TAG[] = "device";
+    static constexpr auto TAG = "device";
 
     static constexpr int        DEVICE_LED_GPIO    = 8;
     static constexpr int        I2C_MASTER_SDA_IO  = 21;
@@ -127,7 +125,7 @@ class MyDevice : public sensgreen::device::esp32::Esp32Device<Bme280, Bh1750>
         LED_STRIP_RMT,
         {RMT_CLK_SRC_DEFAULT, (10 * 1000 * 1000), 0, {false}}};
 
-    led_indicator_config_t m_ledIndconfig;
+    led_indicator_config_t m_ledConfig;
     led_indicator_handle_t m_led;
 
     static constexpr i2c_config_t DEVICE_I2C_CONFIG {
@@ -141,12 +139,12 @@ class MyDevice : public sensgreen::device::esp32::Esp32Device<Bme280, Bh1750>
         esp_err_t err = ESP_OK;
 
         // LED initialisation
-        m_ledIndconfig.mode                        = LED_STRIPS_MODE;
-        m_ledIndconfig.led_indicator_strips_config = const_cast<led_indicator_strips_config_t *>(&DEVICE_LED_CONFIG);
-        m_ledIndconfig.blink_lists                 = nullptr;  // define blinks later if needed
-        m_ledIndconfig.blink_list_num              = 0;
+        m_ledConfig.mode                        = LED_STRIPS_MODE;
+        m_ledConfig.led_indicator_strips_config = const_cast<led_indicator_strips_config_t *>(&DEVICE_LED_CONFIG);
+        m_ledConfig.blink_lists                 = nullptr;  // define blinks later if needed
+        m_ledConfig.blink_list_num              = 0;
 
-        m_led = led_indicator_create(&m_ledIndconfig);
+        m_led = led_indicator_create(&m_ledConfig);
         assert(nullptr != m_led);
         err = led_indicator_set_on_off(m_led, false);
         RETURN_IF_ERR(err);

@@ -30,10 +30,10 @@ using sensgreen::mqtt::ConnConfig;
 using sensgreen::mqtt::MqttEvent;
 using sensgreen::mqtt::esp32::Esp32MqttConnector;
 
-inline static constexpr char TAG[] = "app";
-
 namespace
 {
+constexpr auto TAG = "app";
+
 DeviceConfig  deviceConfig {DEVICE_UID, MQTT_TOPIC, MQTT_TOPIC, MQTT_TOPIC, MQTT_TOPIC};
 app::MyDevice device {deviceConfig};
 auto&         connector = Esp32MqttConnector::instance();
@@ -43,18 +43,9 @@ constexpr std::string_view NTP_SERVER {"pool.ntp.org"};
 
 void timeSynced(struct timeval* tv)
 {
-    ESP_LOGI(TAG, "Time synced");
-
     esp_err_t err = connector.connect();
-
-    if (err == ESP_OK)
-    {
-        ESP_LOGI(TAG, "mqtt-client started");
-    }
-    else
-    {
-        ESP_LOGE(TAG, "mqtt-client failed to start (%s)", esp_err_to_name(err));
-    }
+    PRINT_IF_ERR(err);
+    PRINT_IF_SUCC(err, "mqtt-client started");
 }
 
 void publishTask(void* pvParameters)
@@ -64,13 +55,11 @@ void publishTask(void* pvParameters)
         device.readAllSensors();
 
         const auto& report = device.report();
-        ESP_LOGI(TAG, "%s", report.dump().c_str());
+        auto        jstr   = report.dump();
+        PRINT_LOC(jstr.c_str());
 
-        esp_err_t err = (esp_err_t)connector.publish(deviceConfig.topicData, report.dump());
-        if (ESP_OK != err)
-        {
-            ESP_LOGE(TAG, "publish failed (%s)", esp_err_to_name(err));
-        }
+        esp_err_t err = (esp_err_t)connector.publish(deviceConfig.topicData, jstr);
+        PRINT_IF_ERR(err);
 
         vTaskDelay(pdMS_TO_TICKS(60000));  // Delay for a minute
     }
@@ -82,6 +71,21 @@ extern "C" void app_main(void)
 {
     // ESP_LOGI(TAG, "config:\nmqtt_host='%s'\nmqtt_port='%s'\nmqtt_user='%s'\nmqtt_pass='%s'\n", MQTT_HOST, MQTT_PORT,
     //          MQTT_USER, MQTT_PASS);
+
+    // various initialisations
+    ESP_ERROR_CHECK(nvs_flash_init());
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+    // initialise SNTP
+    esp_sntp_config_t sntpConfig          = ESP_NETIF_SNTP_DEFAULT_CONFIG(NTP_SERVER.data());
+    sntpConfig.start                      = false;
+    sntpConfig.server_from_dhcp           = true;
+    sntpConfig.renew_servers_after_new_IP = true;
+    sntpConfig.index_of_first_server      = 1;
+    sntpConfig.ip_event_to_renew          = IP_EVENT_STA_GOT_IP;
+    sntpConfig.sync_cb                    = timeSynced;
+    ESP_ERROR_CHECK(esp_netif_sntp_init(&sntpConfig));
 
     // Initialise MQTT connector
     ConnConfig config {MQTT_HOST, static_cast<int16_t>(std::stoi(MQTT_PORT)), MQTT_USER, MQTT_PASS};
@@ -111,21 +115,6 @@ extern "C" void app_main(void)
                                            vTaskSuspend(publishTaskHandle);
                                        }
                                    });
-
-    // various initialisations
-    ESP_ERROR_CHECK(nvs_flash_init());
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
-
-    // initialise SNTP
-    esp_sntp_config_t sntpConfig          = ESP_NETIF_SNTP_DEFAULT_CONFIG(NTP_SERVER.data());
-    sntpConfig.start                      = false;
-    sntpConfig.server_from_dhcp           = true;
-    sntpConfig.renew_servers_after_new_IP = true;
-    sntpConfig.index_of_first_server      = 1;
-    sntpConfig.ip_event_to_renew          = IP_EVENT_STA_GOT_IP;
-    sntpConfig.sync_cb                    = timeSynced;
-    ESP_ERROR_CHECK(esp_netif_sntp_init(&sntpConfig));
 
     // initialise device
     ESP_ERROR_CHECK(device.init());
