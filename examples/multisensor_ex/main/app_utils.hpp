@@ -25,3 +25,4 @@
     }
 
 #define PRINT_LOC(str) ESP_LOGI(TAG, "[%s,%d] %s", __func__, __LINE__, str)
+#define PRINT_LOC_D(str) ESP_LOGD(TAG, "[%s,%d] %s", __func__, __LINE__, str)

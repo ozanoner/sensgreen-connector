@@ -37,7 +37,10 @@ class Bme280
         i2c_bus_handle_t i2cBus = static_cast<i2c_bus_handle_t>(param);
         m_bme280                = bme280_create(i2cBus, BME280_I2C_ADDRESS_DEFAULT);
         assert(nullptr != m_bme280);
-        return (int)ESP_OK;
+
+        esp_err_t err = bme280_default_init(m_bme280);
+        PRINT_IF_ERR(err);
+        return (int)err;
     }
 
     int read() override
@@ -46,21 +49,21 @@ class Bme280
         esp_err_t err  = ESP_OK;
 
         vTaskDelay(300 / portTICK_RATE_MS);
-        PRINT_LOC("before bme280_read_temperature");
+        PRINT_LOC_D("before bme280_read_temperature");
         err = bme280_read_temperature(m_bme280, &data);
         PRINT_IF_ERR(err);
         RETURN_IF_ERR(err);
         get<sensgreen::device::TemperatureMetric>().setValue(data);
 
         vTaskDelay(300 / portTICK_RATE_MS);
-        PRINT_LOC("before bme280_read_humidity");
+        PRINT_LOC_D("before bme280_read_humidity");
         err = bme280_read_humidity(m_bme280, &data);
         PRINT_IF_ERR(err);
         RETURN_IF_ERR(err);
         get<sensgreen::device::HumidityMetric>().setValue(data);
 
         vTaskDelay(300 / portTICK_RATE_MS);
-        PRINT_LOC("before bme280_read_pressure");
+        PRINT_LOC_D("before bme280_read_pressure");
         err = bme280_read_pressure(m_bme280, &data);
         PRINT_IF_ERR(err);
         RETURN_IF_ERR(err);
@@ -90,12 +93,12 @@ class Bh1750 : public sensgreen::device::SensorBase<sensgreen::device::LightMetr
         float     data = 0.0;
         esp_err_t err  = ESP_OK;
 
-        PRINT_LOC("before bh1750_power_on");
+        PRINT_LOC_D("before bh1750_power_on");
         bh1750_power_on(m_bh1750);
         bh1750_set_measure_mode(m_bh1750, BH1750_ONETIME_4LX_RES);
 
         vTaskDelay(30 / portTICK_RATE_MS);
-        PRINT_LOC("before bh1750_get_data");
+        PRINT_LOC_D("before bh1750_get_data");
         err = bh1750_get_data(m_bh1750, &data);
         PRINT_IF_ERR(err);
         RETURN_IF_ERR(err);
