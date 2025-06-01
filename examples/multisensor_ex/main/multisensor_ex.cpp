@@ -8,6 +8,7 @@
 
 #include <string_view>
 
+#include "app_utils.hpp"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_netif_sntp.h"
@@ -24,12 +25,12 @@
 #include "protocol_examples_utils.h"
 #include "sensgreen.hpp"
 
-#define TAG (TAG_STR.data())
-
 using sensgreen::device::DeviceConfig;
 using sensgreen::mqtt::ConnConfig;
 using sensgreen::mqtt::MqttEvent;
 using sensgreen::mqtt::esp32::Esp32MqttConnector;
+
+inline static constexpr char TAG[] = "app";
 
 namespace
 {
@@ -39,7 +40,6 @@ auto&         connector = Esp32MqttConnector::instance();
 TaskHandle_t  publishTaskHandle {nullptr};
 
 constexpr std::string_view NTP_SERVER {"pool.ntp.org"};
-constexpr std::string_view TAG_STR {"app"};
 
 void timeSynced(struct timeval* tv)
 {

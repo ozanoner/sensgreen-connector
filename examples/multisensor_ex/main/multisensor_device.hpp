@@ -9,7 +9,9 @@
 #pragma once
 
 #include <cassert>
+#include <string_view>
 
+#include "app_utils.hpp"
 #include "bh1750.h"
 #include "bme280.h"
 #include "esp_err.h"
@@ -17,14 +19,6 @@
 #include "freertos/task.h"
 #include "led_indicator.h"
 #include "sensgreen.hpp"
-
-#define RETURN_IF_ERR(err)   \
-    {                        \
-        if (err)             \
-        {                    \
-            return (int)err; \
-        }                    \
-    }
 
 namespace app
 {
@@ -34,7 +28,8 @@ class Bme280
                                            sensgreen::device::PressureMetric>
 {
    private:
-    bme280_handle_t m_bme280;
+    bme280_handle_t              m_bme280;
+    inline static constexpr char TAG[] = "bme280";
 
    public:
     int init(void *param) override
@@ -51,17 +46,23 @@ class Bme280
         esp_err_t err  = ESP_OK;
 
         vTaskDelay(300 / portTICK_RATE_MS);
+        PRINT_LOC("before bme280_read_temperature");
         err = bme280_read_temperature(m_bme280, &data);
+        PRINT_IF_ERR(err);
         RETURN_IF_ERR(err);
         get<sensgreen::device::TemperatureMetric>().setValue(data);
 
         vTaskDelay(300 / portTICK_RATE_MS);
+        PRINT_LOC("before bme280_read_humidity");
         err = bme280_read_humidity(m_bme280, &data);
+        PRINT_IF_ERR(err);
         RETURN_IF_ERR(err);
         get<sensgreen::device::HumidityMetric>().setValue(data);
 
         vTaskDelay(300 / portTICK_RATE_MS);
+        PRINT_LOC("before bme280_read_pressure");
         err = bme280_read_pressure(m_bme280, &data);
+        PRINT_IF_ERR(err);
         RETURN_IF_ERR(err);
         get<sensgreen::device::PressureMetric>().setValue(data);
 
@@ -72,7 +73,8 @@ class Bme280
 class Bh1750 : public sensgreen::device::SensorBase<sensgreen::device::LightMetric>
 {
    private:
-    bh1750_handle_t m_bh1750;
+    bh1750_handle_t              m_bh1750;
+    inline static constexpr char TAG[] = "bh1750";
 
    public:
     int init(void *param) override
@@ -88,11 +90,14 @@ class Bh1750 : public sensgreen::device::SensorBase<sensgreen::device::LightMetr
         float     data = 0.0;
         esp_err_t err  = ESP_OK;
 
+        PRINT_LOC("before bh1750_power_on");
         bh1750_power_on(m_bh1750);
         bh1750_set_measure_mode(m_bh1750, BH1750_ONETIME_4LX_RES);
 
         vTaskDelay(30 / portTICK_RATE_MS);
+        PRINT_LOC("before bh1750_get_data");
         err = bh1750_get_data(m_bh1750, &data);
+        PRINT_IF_ERR(err);
         RETURN_IF_ERR(err);
 
         get<sensgreen::device::LightMetric>().setValue(data);
@@ -106,9 +111,11 @@ class MyDevice : public sensgreen::device::esp32::Esp32Device<Bme280, Bh1750>
     using sensgreen::device::esp32::Esp32Device<Bme280, Bh1750>::Esp32Device;  // inherit constructors
 
    private:
+    inline static constexpr char TAG[] = "device";
+
     static constexpr int        DEVICE_LED_GPIO    = 8;
-    static constexpr int        I2C_MASTER_SCL_IO  = 22;
     static constexpr int        I2C_MASTER_SDA_IO  = 21;
+    static constexpr int        I2C_MASTER_SCL_IO  = 22;
     static constexpr i2c_port_t I2C_MASTER_NUM     = I2C_NUM_0;
     static constexpr int        I2C_MASTER_FREQ_HZ = (100 * 1000);
 
