@@ -128,7 +128,7 @@ extern "C" void app_main(void)
     ESP_ERROR_CHECK(esp_netif_sntp_init(&sntpConfig));
 
     // initialise device
-    ESP_ERROR_CHECK(device.boardInit());
+    ESP_ERROR_CHECK(device.init());
 
     // connect wifi
     ESP_ERROR_CHECK(example_connect());
