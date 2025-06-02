@@ -1,0 +1,46 @@
+menu "App Configuration"
+
+    # MQTT credentials
+    config MQTT_USER
+        string "MQTT Username"
+        default "my_default_user"
+        help
+          The username to pass into your MQTT broker.
+    
+    config MQTT_PASS
+        string "MQTT Password"
+        default "my_default_pass"
+        help
+          The password to pass into your MQTT broker.
+    
+    config MQTT_HOST
+        string "MQTT Broker Host"
+        default "broker.emqx.io"
+        help
+          The hostname or IP address of your MQTT broker.
+    
+    config MQTT_PORT
+        string "MQTT Broker Port"
+        default "1883"
+        help
+          The port on which your MQTT broker is listening.
+    
+    config MQTT_TOPIC
+        string "MQTT Topic"
+        default "sensor/data"
+        help
+          The MQTT topic to publish to.
+    
+    config MQTT_PUBLISH_PERIOD_MINUTES
+        int "Publish Period (Minutes)"
+        default 15
+        help
+          The interval in minutes at which data is published to the MQTT broker.
+
+    config DEVICE_UID
+        string "Device UID"
+        default "device-uid"
+        help
+            Unique device identifier 
+endmenu
+    

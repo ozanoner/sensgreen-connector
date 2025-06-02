@@ -2,7 +2,7 @@
 # CMakeLists in this exact order for cmake to work correctly
 cmake_minimum_required(VERSION 3.16)
 
-set(IDF_TARGET "esp32c6")
+# set(IDF_TARGET "esp32c6")
 set(EXTRA_COMPONENT_DIRS 
     ../.. 
     $ENV{IDF_PATH}/examples/common_components/protocol_examples_common
@@ -10,19 +10,8 @@ set(EXTRA_COMPONENT_DIRS
     ./extra_components/esp-iot-solution/components/sensors/pressure/bme280
     ./extra_components/esp-iot-solution/components/led/led_indicator)
 
-if(EXISTS "${CMAKE_SOURCE_DIR}/build_secrets.cmake")
-    include(${CMAKE_SOURCE_DIR}/build_secrets.cmake)
-endif()
-
-# Export as compile definitions
-add_compile_definitions(
-    MQTT_USER="${SECRETS_MQTT_USER}"
-    MQTT_PASS="${SECRETS_MQTT_PASS}"
-    MQTT_HOST="${SECRETS_MQTT_HOST}"
-    MQTT_PORT="${SECRETS_MQTT_PORT}"
-    MQTT_TOPIC="${SECRETS_MQTT_TOPIC}"
-    DEVICE_UID="${SECRETS_DEVICE_UID}"
-)
+set(SDKCONFIG_DEFAULTS "sdkconfig.defaults;sdkconfig.user")
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(multisensor_ex)
+

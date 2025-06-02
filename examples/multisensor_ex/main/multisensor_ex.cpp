@@ -23,6 +23,7 @@
 #include "nvs_flash.h"
 #include "protocol_examples_common.h"
 #include "protocol_examples_utils.h"
+#include "sdkconfig.h"
 #include "sensgreen.hpp"
 
 using sensgreen::device::DeviceConfig;
@@ -34,7 +35,8 @@ namespace
 {
 constexpr auto TAG = "app";
 
-DeviceConfig  deviceConfig {DEVICE_UID, MQTT_TOPIC, MQTT_TOPIC, MQTT_TOPIC, MQTT_TOPIC};
+DeviceConfig  deviceConfig {CONFIG_DEVICE_UID, CONFIG_MQTT_TOPIC, CONFIG_MQTT_TOPIC, CONFIG_MQTT_TOPIC,
+                           CONFIG_MQTT_TOPIC};
 app::MyDevice device {deviceConfig};
 auto&         connector = Esp32MqttConnector::instance();
 TaskHandle_t  publishTaskHandle {nullptr};
@@ -50,6 +52,7 @@ void timeSynced(struct timeval* tv)
 
 void publishTask(void* pvParameters)
 {
+    uint32_t periodMs = CONFIG_MQTT_PUBLISH_PERIOD_MINUTES * 60ul * 1000;
     while (true)
     {
         device.readAllSensors();
@@ -61,7 +64,7 @@ void publishTask(void* pvParameters)
         esp_err_t err = (esp_err_t)connector.publish(deviceConfig.topicData, jstr);
         PRINT_IF_ERR(err);
 
-        vTaskDelay(pdMS_TO_TICKS(60000));  // Delay for a minute
+        vTaskDelay(pdMS_TO_TICKS(periodMs));  // Delay for a minute
     }
 }
 
@@ -69,9 +72,6 @@ void publishTask(void* pvParameters)
 
 extern "C" void app_main(void)
 {
-    // ESP_LOGI(TAG, "config:\nmqtt_host='%s'\nmqtt_port='%s'\nmqtt_user='%s'\nmqtt_pass='%s'\n", MQTT_HOST, MQTT_PORT,
-    //          MQTT_USER, MQTT_PASS);
-
     // various initialisations
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
@@ -88,7 +88,8 @@ extern "C" void app_main(void)
     ESP_ERROR_CHECK(esp_netif_sntp_init(&sntpConfig));
 
     // Initialise MQTT connector
-    ConnConfig config {MQTT_HOST, static_cast<int16_t>(std::stoi(MQTT_PORT)), MQTT_USER, MQTT_PASS};
+    ConnConfig config {CONFIG_MQTT_HOST, static_cast<int16_t>(std::stoi(CONFIG_MQTT_PORT)), CONFIG_MQTT_USER,
+                       CONFIG_MQTT_PASS};
     ESP_ERROR_CHECK(connector.init(config));
 
     // Start the publish task when MQTT is connected

@@ -33,30 +33,26 @@ This project demonstrates the use of multiple sensors integrated into a single d
    git submodule update --init --recursive
    ```
 
-4. Add `build_secrets.cmake` in the project root and set the values for your device:
+4. Add `sdkconfig.user` in the project root and set the values for your device:
 
-   ```file
-    set(SECRETS_MQTT_USER     "sensgreen-mqtt-user"         CACHE INTERNAL "")
-    set(SECRETS_MQTT_PASS     "sensgreen-mqtt-password"     CACHE INTERNAL "")
-    set(SECRETS_MQTT_HOST     "sensgreen-broker-address"    CACHE INTERNAL "")
-    set(SECRETS_MQTT_PORT     "mqtt port"                   CACHE INTERNAL "")
-    set(SECRETS_MQTT_TOPIC    "sensgreen-mqtt-topic"        CACHE INTERNAL "")
-    set(SECRETS_DEVICE_UID    "sensgreen-device-id"         CACHE INTERNAL "")
+   ```file   
+   CONFIG_MQTT_USER="sensgreen-mqtt-user"
+   CONFIG_MQTT_PASS="sensgreen-mqtt-password"
+   CONFIG_MQTT_HOST="sensgreen-broker"
+   CONFIG_MQTT_PORT="broker-port"
+   CONFIG_MQTT_TOPIC="sensor/data"
+   CONFIG_DEVICE_UID="my-unique-device-id"
+   CONFIG_EXAMPLE_WIFI_SSID="my-wifi-ssid"
+   CONFIG_EXAMPLE_WIFI_PASSWORD="my-wifi-password"
    ```
 
-5. Set the WiFi SSID and password in `(Top) → Example Connection Configuration` by running menuconfig:
-
-   ```bash
-   idf.py menuconfig
-   ```
-
-6. Monitor the serial output to view the sensor readings:
+5. Monitor the serial output to view the sensor readings:
 
    ```bash
    idf.py flash monitor --print-filter="app MQTT" -p /dev/ttyACM0
    ```
 
-7. You should observe a similar output to the following on the serial console:
+6. You should observe a similar output to the following on the serial console:
    ```output
    --- esp-idf-monitor 1.6.0 on /dev/ttyACM0 115200
    --- Quit: Ctrl+] | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H
