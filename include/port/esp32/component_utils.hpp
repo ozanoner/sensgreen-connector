@@ -10,13 +10,13 @@
 
 #include "esp_log.h"
 
-#define RETURN_IF_ERR(err, mess)                                                              \
-    {                                                                                         \
-        if (err)                                                                              \
-        {                                                                                     \
-            ESP_LOGE(TAG, "[%s,%d] %s (%s)", __func__, __LINE__, mess, esp_err_to_name(err)); \
-            return (int)err;                                                                  \
-        }                                                                                     \
+#define RETURN_IF_ERR(err, fmt, ...)                                                                    \
+    {                                                                                                   \
+        if (err)                                                                                        \
+        {                                                                                               \
+            ESP_LOGE(TAG, "[%s,%d] %s: " fmt, __func__, __LINE__, esp_err_to_name(err), ##__VA_ARGS__); \
+            return (int)err;                                                                            \
+        }                                                                                               \
     }
 
 #define RETURN_IF_ERR2(err)  \
@@ -27,21 +27,29 @@
         }                    \
     }
 
-#define PRINT_IF_ERR(err, mess)                                                               \
-    {                                                                                         \
-        if (err)                                                                              \
-        {                                                                                     \
-            ESP_LOGE(TAG, "[%s,%d] %s (%s)", __func__, __LINE__, mess, esp_err_to_name(err)); \
-        }                                                                                     \
+#define PRINT_IF_ERR(err, fmt, ...)                                                                     \
+    {                                                                                                   \
+        if (err)                                                                                        \
+        {                                                                                               \
+            ESP_LOGE(TAG, "[%s,%d] %s: " fmt, __func__, __LINE__, esp_err_to_name(err), ##__VA_ARGS__); \
+        }                                                                                               \
     }
 
-#define PRINT_IF_SUCC(err, mess)                                   \
-    {                                                              \
-        if (!err)                                                  \
-        {                                                          \
-            ESP_LOGI(TAG, "[%s,%d] %s", __func__, __LINE__, mess); \
-        }                                                          \
+#define PRINT_IF_SUCC(err, fmt, ...)                                          \
+    {                                                                         \
+        if (!err)                                                             \
+        {                                                                     \
+            ESP_LOGI(TAG, "[%s,%d] " fmt, __func__, __LINE__, ##__VA_ARGS__); \
+        }                                                                     \
     }
 
-#define PRINT_LOC(mess) ESP_LOGI(TAG, "[%s,%d] %s", __func__, __LINE__, mess)
-#define PRINT_LOC_D(mess) ESP_LOGD(TAG, "[%s,%d] %s", __func__, __LINE__, mess)
+#define PRINT_IF_SUCC_D(err, fmt, ...)                                        \
+    {                                                                         \
+        if (!err)                                                             \
+        {                                                                     \
+            ESP_LOGD(TAG, "[%s,%d] " fmt, __func__, __LINE__, ##__VA_ARGS__); \
+        }                                                                     \
+    }
+
+#define PRINT_LOC(fmt, ...) ESP_LOGI(TAG, "[%s,%d] " fmt, __func__, __LINE__, ##__VA_ARGS__)
+#define PRINT_LOC_D(fmt, ...) ESP_LOGD(TAG, "[%s,%d] " fmt, __func__, __LINE__, ##__VA_ARGS__)

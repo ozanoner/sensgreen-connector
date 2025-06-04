@@ -30,6 +30,8 @@ class Esp32MqttConnector : public sensgreen::mqtt::Connector
     int subscribe(std::string_view topic, sensgreen::mqtt::DataHandler handler) override;
 
    private:
+    static constexpr auto TAG = "mqtt";
+
     Esp32MqttConnector() = default;
 
     esp_mqtt_client_handle_t m_client = nullptr;

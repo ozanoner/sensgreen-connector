@@ -58,7 +58,7 @@ void publishTask(void* pvParameters)
 
         const auto& report = device.report();
         auto        jstr   = report.dump();
-        PRINT_LOC(jstr.c_str());
+        PRINT_LOC("%s", jstr.c_str());
 
         esp_err_t err = (esp_err_t)connector.publish(deviceConfig.topicData, jstr);
         PRINT_IF_ERR(err, "publish failed");
