@@ -8,8 +8,8 @@
 
 #include "esp32_mqtt_connector.hpp"
 
+#include "component_utils.hpp"
 #include "esp_event.h"
-#include "esp_log.h"
 
 #define RETURN_IF_NOT_READY()             \
     do                                    \
@@ -86,12 +86,10 @@ int Esp32MqttConnector::publish(std::string_view topic, std::string_view payload
 {
     RETURN_IF_NOT_READY();
 
-    ESP_LOGI("MQTT", "publishing to topic '%.*s', data '%.*s'", topic.size(), topic.data(), payload.size(),
-             payload.data());
+    PRINT_LOC_D("topic: '%.*s'", topic.size(), topic.data());
     int msg_id = esp_mqtt_client_publish(m_client, topic.data(), payload.data(), static_cast<int>(payload.size()), qos,
                                          retain ? 1 : 0);
-
-    ESP_LOGI("MQTT", "msg_id=%d", msg_id);
+    PRINT_LOC_D("msg_id: %d", msg_id);
     return (msg_id >= 0) ? 0 : ESP_FAIL;
 }
 

@@ -11,7 +11,6 @@
 #include <cassert>
 #include <string_view>
 
-#include "app_utils.hpp"
 #include "bh1750.h"
 #include "bme280.h"
 #include "esp_err.h"
@@ -39,7 +38,7 @@ class Bme280
         assert(nullptr != m_bme280);
 
         esp_err_t err = bme280_default_init(m_bme280);
-        PRINT_IF_ERR(err);
+        RETURN_IF_ERR(err, "bme280 init failed");
         return (int)err;
     }
 
@@ -51,20 +50,17 @@ class Bme280
         vTaskDelay(pdMS_TO_TICKS(300));
         PRINT_LOC_D("before bme280_read_temperature");
         err = bme280_read_temperature(m_bme280, &data);
-        PRINT_IF_ERR(err);
-        RETURN_IF_ERR(err);
+        RETURN_IF_ERR(err, "bme280 temp-read failed");
         get<sensgreen::device::TemperatureMetric>().setValue(data);
 
         PRINT_LOC_D("before bme280_read_humidity");
         err = bme280_read_humidity(m_bme280, &data);
-        PRINT_IF_ERR(err);
-        RETURN_IF_ERR(err);
+        RETURN_IF_ERR(err, "bme280 humidity-read failed");
         get<sensgreen::device::HumidityMetric>().setValue(data);
 
         PRINT_LOC_D("before bme280_read_pressure");
         err = bme280_read_pressure(m_bme280, &data);
-        PRINT_IF_ERR(err);
-        RETURN_IF_ERR(err);
+        RETURN_IF_ERR(err, "bme280 pressure-read failed");
         get<sensgreen::device::PressureMetric>().setValue(data);
 
         return (int)err;
@@ -98,8 +94,7 @@ class Bh1750 : public sensgreen::device::SensorBase<sensgreen::device::LightMetr
         vTaskDelay(pdMS_TO_TICKS(30));
         PRINT_LOC_D("before bh1750_get_data");
         err = bh1750_get_data(m_bh1750, &data);
-        PRINT_IF_ERR(err);
-        RETURN_IF_ERR(err);
+        RETURN_IF_ERR(err, "bh1750 read failed");
 
         get<sensgreen::device::LightMetric>().setValue(data);
 
@@ -147,13 +142,13 @@ class MyDevice : public sensgreen::device::esp32::Esp32Device<Bme280, Bh1750>
         m_led = led_indicator_create(&m_ledConfig);
         assert(nullptr != m_led);
         err = led_indicator_set_on_off(m_led, false);
-        RETURN_IF_ERR(err);
+        RETURN_IF_ERR(err, "led init failed");
 
         m_i2cBus = i2c_bus_create(I2C_MASTER_NUM, &DEVICE_I2C_CONFIG);
         assert(nullptr != m_i2cBus);
 
         err = getSensor<Bh1750>().init(m_i2cBus);
-        RETURN_IF_ERR(err);
+        RETURN_IF_ERR2(err);
 
         err = getSensor<Bme280>().init(m_i2cBus);
 

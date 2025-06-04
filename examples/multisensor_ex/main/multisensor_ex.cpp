@@ -8,7 +8,6 @@
 
 #include <string_view>
 
-#include "app_utils.hpp"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_netif_sntp.h"
@@ -46,7 +45,7 @@ constexpr std::string_view NTP_SERVER {"pool.ntp.org"};
 void timeSynced(struct timeval* tv)
 {
     esp_err_t err = connector.connect();
-    PRINT_IF_ERR(err);
+    PRINT_IF_ERR(err, "mqtt-connect failed");
     PRINT_IF_SUCC(err, "mqtt-client started");
 }
 
@@ -59,10 +58,10 @@ void publishTask(void* pvParameters)
 
         const auto& report = device.report();
         auto        jstr   = report.dump();
-        PRINT_LOC(jstr.c_str());
+        PRINT_LOC("%s", jstr.c_str());
 
         esp_err_t err = (esp_err_t)connector.publish(deviceConfig.topicData, jstr);
-        PRINT_IF_ERR(err);
+        PRINT_IF_ERR(err, "publish failed");
 
         vTaskDelay(pdMS_TO_TICKS(periodMs));  // Delay for a minute
     }
