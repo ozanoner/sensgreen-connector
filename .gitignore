@@ -112,6 +112,7 @@ XUNIT_RESULT*.xml
 
 # secrets
 build_secrets.cmake
+sdkconfig.user
 
 # IDF-component manager output
 dist/
