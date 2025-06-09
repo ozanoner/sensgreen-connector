@@ -21,12 +21,11 @@ targets:
   - esp32s2
   - esp32s3
 files:
-   exclude:
-    - ".*"
-    - "dist"
-    - "**/build"
+  exclude:
     - "**/build_secrets.cmake"
-    - "**/sdkconfig"
-    - "**/sdkconfig.old"
-    - "**/managed_components"
-    - "**/dependencies.lock"
+    - "**/sdkconfig.user"
+    - "**/extra_components/**/*"
+    - dist
+    - ".devcontainer/**/*"
+    - ".wokwi/**/*"
+    - ".vscode/**/*"
