@@ -67,7 +67,7 @@ class Bme280
     }
 };
 
-class Bh1750 : public sensgreen::device::SensorBase<sensgreen::device::LightMetric>
+class Bh1750 : public sensgreen::device::SensorBase<sensgreen::device::LightLevelMetric>
 {
    private:
     bh1750_handle_t       m_bh1750;
@@ -96,7 +96,7 @@ class Bh1750 : public sensgreen::device::SensorBase<sensgreen::device::LightMetr
         err = bh1750_get_data(m_bh1750, &data);
         RETURN_IF_ERR(err, "bh1750 read failed");
 
-        get<sensgreen::device::LightMetric>().setValue(data);
+        get<sensgreen::device::LightLevelMetric>().setValue(data);
 
         return (int)err;
     }
