@@ -31,6 +31,9 @@ using sensgreen::DeviceConfig;
 
 #define CONFIG_BROKER_URL (CONFIG_MQTT_HOST ":" CONFIG_MQTT_PORT)
 
+extern const char _binary_localhost_crt_start[];
+extern const char _binary_localhost_crt_end[];
+
 namespace
 {
 constexpr auto TAG = "app";
@@ -39,8 +42,9 @@ DeviceConfig  deviceConfig {CONFIG_DEVICE_UID, CONFIG_MQTT_TOPIC, CONFIG_MQTT_TO
                            CONFIG_MQTT_TOPIC};
 app::MyDevice device {deviceConfig};
 
-BrokerConfiguration broker {.address  = {idf::mqtt::URI {std::string {CONFIG_BROKER_URL}}},
-                            .security = idf::mqtt::Insecure {}};
+BrokerConfiguration broker {
+    .address  = {idf::mqtt::URI {std::string {CONFIG_BROKER_URL}}},
+    .security = idf::mqtt::CryptographicInformation {idf::mqtt::PEM {_binary_localhost_crt_start}}};
 ClientCredentials  credentials {.username = CONFIG_MQTT_USER, .authentication = idf::mqtt::Password {CONFIG_MQTT_PASS}};
 Configuration      config {};
 app::MqttConnector connector {broker, credentials, config};
