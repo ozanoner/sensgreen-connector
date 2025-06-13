@@ -1,0 +1,11 @@
+## IDF Component Manager Manifest File
+dependencies:
+  ## Required IDF version
+  idf:
+    version: '>=5.2.0'
+  ozanoner/esp_mqtt_cxx:
+    git: https://github.com/ozanoner/esp-protocols.git
+    path: components/esp_mqtt_cxx
+    version: master-ozan
+  protocol_examples_common:
+    path: ${IDF_PATH}/examples/common_components/protocol_examples_common

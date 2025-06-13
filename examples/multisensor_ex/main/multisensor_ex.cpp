@@ -10,14 +10,13 @@
 
 #include "esp_event.h"
 #include "esp_log.h"
+#include "esp_mqtt_client_config.hpp"
 #include "esp_netif_sntp.h"
 #include "esp_sntp.h"
 #include "esp_system.h"
 #include "esp_wifi.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/event_groups.h"
-#include "freertos/task.h"
 #include "lwip/ip_addr.h"
+#include "mqtt_connector.hpp"
 #include "multisensor_device.hpp"
 #include "nvs_flash.h"
 #include "protocol_examples_common.h"
@@ -25,10 +24,12 @@
 #include "sdkconfig.h"
 #include "sensgreen.hpp"
 
+using idf::mqtt::BrokerConfiguration;
+using idf::mqtt::ClientCredentials;
+using idf::mqtt::Configuration;
 using sensgreen::DeviceConfig;
-using sensgreen::mqtt::ConnConfig;
-using sensgreen::mqtt::MqttEvent;
-using sensgreen::mqtt::esp32::Esp32MqttConnector;
+
+#define CONFIG_BROKER_URL (CONFIG_MQTT_HOST ":" CONFIG_MQTT_PORT)
 
 namespace
 {
@@ -37,31 +38,42 @@ constexpr auto TAG = "app";
 DeviceConfig  deviceConfig {CONFIG_DEVICE_UID, CONFIG_MQTT_TOPIC, CONFIG_MQTT_TOPIC, CONFIG_MQTT_TOPIC,
                            CONFIG_MQTT_TOPIC};
 app::MyDevice device {deviceConfig};
-auto&         connector = Esp32MqttConnector::instance();
-TaskHandle_t  publishTaskHandle {nullptr};
+
+BrokerConfiguration broker {.address  = {idf::mqtt::URI {std::string {CONFIG_BROKER_URL}}},
+                            .security = idf::mqtt::Insecure {}};
+ClientCredentials  credentials {.username = CONFIG_MQTT_USER, .authentication = idf::mqtt::Password {CONFIG_MQTT_PASS}};
+Configuration      config {};
+app::MqttConnector connector {broker, credentials, config};
 
 constexpr std::string_view NTP_SERVER {"pool.ntp.org"};
 
 void timeSynced(struct timeval* tv)
 {
-    esp_err_t err = connector.connect();
-    PRINT_IF_ERR(err, "mqtt-connect failed");
-    PRINT_IF_SUCC(err, "mqtt-client started");
+    try
+    {
+        connector.start();
+        PRINT_LOC("mqtt connected");
+    }
+    catch (...)
+    {
+        PRINT_LOC_E("mqtt-connect failed");
+    }
 }
 
 void publishTask(void* pvParameters)
 {
-    uint32_t periodMs = CONFIG_MQTT_PUBLISH_PERIOD_MINUTES * 60ul * 1000;
+    constexpr uint32_t periodMs = CONFIG_MQTT_PUBLISH_PERIOD_MINUTES * 60ul * 1000;
     while (true)
     {
         device.readAllSensors();
 
-        const auto& report = device.report();
-        auto        jstr   = report.dump();
-        PRINT_LOC("%s", jstr.c_str());
+        const auto report = device.report().dump();
+        PRINT_LOC("%s", report.c_str());
 
-        esp_err_t err = (esp_err_t)connector.publish(deviceConfig.topicData, jstr);
-        PRINT_IF_ERR(err, "publish failed");
+        if (!connector.publish(deviceConfig.topicData, idf::mqtt::Message<std::string> {report}))
+        {
+            PRINT_LOC_E("publish failed");
+        }
 
         vTaskDelay(pdMS_TO_TICKS(periodMs));  // Delay for a minute
     }
@@ -86,35 +98,8 @@ extern "C" void app_main(void)
     sntpConfig.sync_cb                    = timeSynced;
     ESP_ERROR_CHECK(esp_netif_sntp_init(&sntpConfig));
 
-    // Initialise MQTT connector
-    ConnConfig config {CONFIG_MQTT_HOST, static_cast<int16_t>(std::stoi(CONFIG_MQTT_PORT)), CONFIG_MQTT_USER,
-                       CONFIG_MQTT_PASS};
-    ESP_ERROR_CHECK(connector.init(config));
-
     // Start the publish task when MQTT is connected
-    connector.registerEventHandler(MqttEvent::CONNECTED,
-                                   [](const void*)
-                                   {
-                                       if (nullptr == publishTaskHandle)
-                                       {  // Create the FreeRTOS task
-                                           xTaskCreate(publishTask, "publish-task", 2048, nullptr, tskIDLE_PRIORITY + 1,
-                                                       &publishTaskHandle);
-                                       }
-                                       else
-                                       {
-                                           vTaskResume(publishTaskHandle);
-                                       }
-                                   });
-
-    // Stop the publish task when MQTT is disconnected
-    connector.registerEventHandler(MqttEvent::DISCONNECTED,
-                                   [](const void*)
-                                   {
-                                       if (nullptr != publishTaskHandle)
-                                       {
-                                           vTaskSuspend(publishTaskHandle);
-                                       }
-                                   });
+    connector.registerPublishTask(publishTask);
 
     // initialise device
     ESP_ERROR_CHECK(device.init());

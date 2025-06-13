@@ -101,9 +101,9 @@ class Bh1750 : public sensgreen::SensorBase<sensgreen::LightLevelMetric>
     }
 };
 
-class MyDevice : public sensgreen::esp32::Esp32Device<Bme280, Bh1750>
+class MyDevice : public sensgreen::Device<Bme280, Bh1750>
 {
-    using sensgreen::esp32::Esp32Device<Bme280, Bh1750>::Esp32Device;  // inherit constructors
+    using sensgreen::Device<Bme280, Bh1750>::Device;  // inherit constructors
 
    private:
     static constexpr auto TAG = "device";

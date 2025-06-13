@@ -53,3 +53,4 @@
 
 #define PRINT_LOC(fmt, ...) ESP_LOGI(TAG, "[%s,%d] " fmt, __func__, __LINE__, ##__VA_ARGS__)
 #define PRINT_LOC_D(fmt, ...) ESP_LOGD(TAG, "[%s,%d] " fmt, __func__, __LINE__, ##__VA_ARGS__)
+#define PRINT_LOC_E(fmt, ...) ESP_LOGE(TAG, "[%s,%d] " fmt, __func__, __LINE__, ##__VA_ARGS__)
