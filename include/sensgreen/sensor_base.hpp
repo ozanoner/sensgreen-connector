@@ -14,7 +14,7 @@
 
 #include "metric_base.hpp"
 
-namespace sensgreen::device
+namespace sensgreen
 {
 
 template <typename... Metrics>
@@ -71,4 +71,4 @@ class SensorBase
     MetricsTuple m_metrics;
 };
 
-}  // namespace sensgreen::device
+}  // namespace sensgreen

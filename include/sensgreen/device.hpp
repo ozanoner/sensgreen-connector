@@ -8,12 +8,14 @@
 
 #pragma once
 
+#include <chrono>
 #include <string_view>
 #include <tuple>
 
+#include "nlohmann/json.hpp"
 #include "sensor_base.hpp"
 
-namespace sensgreen::device
+namespace sensgreen
 {
 
 struct DeviceConfig
@@ -26,16 +28,16 @@ struct DeviceConfig
 };
 
 template <typename... Sensors>
-class DeviceBase
+class Device
 {
    public:
     using SensorTuple = std::tuple<Sensors...>;
 
-    explicit DeviceBase(const DeviceConfig& config) : m_config(config) { }
+    explicit Device(const DeviceConfig& config) : m_config(config) { }
 
     // Non-copyable
-    DeviceBase(const DeviceBase&)            = delete;
-    DeviceBase& operator=(const DeviceBase&) = delete;
+    Device(const Device&)            = delete;
+    Device& operator=(const Device&) = delete;
 
     const DeviceConfig& config() const { return m_config; }
 
@@ -60,12 +62,15 @@ class DeviceBase
         std::apply([](auto&... sensor) { (sensor.read(), ...); }, m_sensors);
     }
 
-    nlohmann::json report(std::uint64_t timestamp) const
+    nlohmann::json report() const
     {
         nlohmann::json json;
+        auto           millis =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+                .count();
 
         json["deviceEui"] = m_config.uid;
-        json["timestamp"] = timestamp;
+        json["timestamp"] = static_cast<std::uint64_t>(millis);
         auto& data        = json["data"];  // reference to nested object
         data              = nlohmann::json::object();
 
@@ -79,4 +84,4 @@ class DeviceBase
     SensorTuple  m_sensors;
 };
 
-}  // namespace sensgreen::device
+}  // namespace sensgreen

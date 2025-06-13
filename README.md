@@ -43,7 +43,7 @@ You can prepare your project as the following:
 
 ## Developing a Sensgreen device
 The class hierarchy of in the component is:   
-- A Sensgreen device (derived from ```sensgreen::device::esp32::Esp32Device```) can have 1 or more sensors (derived from ```sensgreen::device::SensorBase```)
+- A Sensgreen device (derived from ```sensgreen::Device```) can have 1 or more sensors (derived from ```sensgreen::SensorBase```)
 - A sensor can measure 1 or more metrics (Defined in managed_components/sensgreen-connector/include/sensgreen/metric_types.hpp)
 
 Sensor is the generic name in the IDF component. It can be actually an actuator as well. Similarly, a metric can be read-only or mutable. Therefore, an actuator can change a metric. 
@@ -60,7 +60,7 @@ Here is the basic steps to develop a new Sensgreen device:
 
 3. Develop a class for the sensor that your device has (or several sensor classes as many as you need).
     ```
-    class TemperatureSensorBrandA : public sensgreen::device::SensorBase<sensgreen::device::TemperatureMetric>
+    class TemperatureSensorBrandA : public sensgreen::SensorBase<sensgreen::TemperatureMetric>
     {
     public:
         int read() override
@@ -68,7 +68,7 @@ Here is the basic steps to develop a new Sensgreen device:
             // read temperature from the physical sensor
             float temperatureValue = 25.0;
             // then update the metric value
-            get<sensgreen::device::TemperatureMetric>().setValue(temperatureValue);
+            get<sensgreen::TemperatureMetric>().setValue(temperatureValue);
             return 0;
         }
     };
@@ -76,9 +76,9 @@ Here is the basic steps to develop a new Sensgreen device:
 
 4. Develop a class for your device.
     ```
-    class MyTemperatureDevice : public sensgreen::device::esp32::Esp32Device<TemperatureSensorBrandA>
+    class MyTemperatureDevice : public sensgreen::Device<TemperatureSensorBrandA>
     {
-        using sensgreen::device::esp32::Esp32Device<TemperatureSensorBrandA>::Esp32Device;  // inherit constructors
+        using sensgreen::Device<TemperatureSensorBrandA>::Device;  // inherit constructors
     };
     ```
 
@@ -88,21 +88,28 @@ Here is the basic steps to develop a new Sensgreen device:
     MyTemperatureDevice device {deviceConfig};
     ```
 
-6. Initialise the Sensgreen platform connection.
+6. Define the Sensgreen platform connection.
     ```
-    auto& connector = Esp32MqttConnector::instance();
+    // class MqttConnector final : public idf::mqtt::Client
 
-    ConnConfig config {MQTT_HOST, static_cast<int16_t>(std::stoi(MQTT_PORT)), MQTT_USER, MQTT_PASS};
-    connector.init(config);
+    BrokerConfiguration broker {.address  = {idf::mqtt::URI {std::string {CONFIG_BROKER_URL}}},
+                                .security = idf::mqtt::Insecure {}};
+    ClientCredentials   credentials {.username = MQTT_USER, .authentication = idf::mqtt::Password {MQTT_PASS}};
+    Configuration       config {};
+    app::MqttConnector  connector {broker, credentials, config};
     ```
 
 7. Register a function to publish device data to the Sensgreen platform when connected.
     ```
-    connector.registerEventHandler(
-        MqttEvent::CONNECTED,
-        [](const void*)
+    connector.registerConnectedHandler(
+        []()
         {
-            connector.publish(deviceConfig.topicData, device.report().dump());
+            const auto& report = device.report().dump();
+
+            if (auto messId = connector.publish(deviceConfig.topicData, idf::mqtt::Message<std::string> {report}))
+            {
+                ESP_LOGI(TAG, "publish success, message ID: %d", static_cast<int>(*messId));
+            }
         });
     ```
 

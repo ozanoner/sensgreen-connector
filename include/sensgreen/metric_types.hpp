@@ -12,7 +12,7 @@
 
 #include "metric_base.hpp"
 
-namespace sensgreen::device
+namespace sensgreen
 {
 
 // ---------- Auto-generated metric tag definitions ----------
@@ -1986,4 +1986,4 @@ DEFINE_REACTIVE_ENERGY_Q_N_TAG(3)
 DEFINE_REACTIVE_ENERGY_Q_N_TAG(4)
 #undef DEFINE_REACTIVE_ENERGY_Q_N_TAG
 
-}  // namespace sensgreen::device
+}  // namespace sensgreen

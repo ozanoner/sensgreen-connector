@@ -25,7 +25,7 @@
 #include "sdkconfig.h"
 #include "sensgreen.hpp"
 
-using sensgreen::device::DeviceConfig;
+using sensgreen::DeviceConfig;
 using sensgreen::mqtt::ConnConfig;
 using sensgreen::mqtt::MqttEvent;
 using sensgreen::mqtt::esp32::Esp32MqttConnector;
