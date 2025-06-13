@@ -1,5 +1,5 @@
 /**
- * @file metric.hpp
+ * @file metric_base.hpp
  * @brief Interface definition for metric
  * @version 0.1
  * @date 2025-04-22
@@ -10,7 +10,7 @@
 
 #include <string_view>
 
-namespace sensgreen::device
+namespace sensgreen
 {
 
 template <typename T, typename Tag>
@@ -36,4 +36,4 @@ class MetricBase
     T m_value;
 };
 
-}  // namespace sensgreen::device
+}  // namespace sensgreen

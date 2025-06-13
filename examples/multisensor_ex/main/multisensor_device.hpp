@@ -23,8 +23,7 @@ namespace app
 {
 
 class Bme280
-    : public sensgreen::device::SensorBase<sensgreen::device::TemperatureMetric, sensgreen::device::HumidityMetric,
-                                           sensgreen::device::PressureMetric>
+    : public sensgreen::SensorBase<sensgreen::TemperatureMetric, sensgreen::HumidityMetric, sensgreen::PressureMetric>
 {
    private:
     bme280_handle_t       m_bme280;
@@ -51,23 +50,23 @@ class Bme280
         PRINT_LOC_D("before bme280_read_temperature");
         err = bme280_read_temperature(m_bme280, &data);
         RETURN_IF_ERR(err, "bme280 temp-read failed");
-        get<sensgreen::device::TemperatureMetric>().setValue(data);
+        get<sensgreen::TemperatureMetric>().setValue(data);
 
         PRINT_LOC_D("before bme280_read_humidity");
         err = bme280_read_humidity(m_bme280, &data);
         RETURN_IF_ERR(err, "bme280 humidity-read failed");
-        get<sensgreen::device::HumidityMetric>().setValue(data);
+        get<sensgreen::HumidityMetric>().setValue(data);
 
         PRINT_LOC_D("before bme280_read_pressure");
         err = bme280_read_pressure(m_bme280, &data);
         RETURN_IF_ERR(err, "bme280 pressure-read failed");
-        get<sensgreen::device::PressureMetric>().setValue(data);
+        get<sensgreen::PressureMetric>().setValue(data);
 
         return (int)err;
     }
 };
 
-class Bh1750 : public sensgreen::device::SensorBase<sensgreen::device::LightLevelMetric>
+class Bh1750 : public sensgreen::SensorBase<sensgreen::LightLevelMetric>
 {
    private:
     bh1750_handle_t       m_bh1750;
@@ -96,15 +95,15 @@ class Bh1750 : public sensgreen::device::SensorBase<sensgreen::device::LightLeve
         err = bh1750_get_data(m_bh1750, &data);
         RETURN_IF_ERR(err, "bh1750 read failed");
 
-        get<sensgreen::device::LightLevelMetric>().setValue(data);
+        get<sensgreen::LightLevelMetric>().setValue(data);
 
         return (int)err;
     }
 };
 
-class MyDevice : public sensgreen::device::esp32::Esp32Device<Bme280, Bh1750>
+class MyDevice : public sensgreen::Device<Bme280, Bh1750>
 {
-    using sensgreen::device::esp32::Esp32Device<Bme280, Bh1750>::Esp32Device;  // inherit constructors
+    using sensgreen::Device<Bme280, Bh1750>::Device;  // inherit constructors
 
    private:
     static constexpr auto TAG = "device";

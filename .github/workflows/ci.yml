@@ -54,7 +54,7 @@ jobs:
         with:
           token: ${{ secrets.WOKWI_CLI_TOKEN }}
           timeout: 30000
-          expect_text: "publish result='ESP_OK'"
+          expect_text: "publish success, message ID:"
           serial_log_file: wokwi.out
 
       - name: Upload artifacts
